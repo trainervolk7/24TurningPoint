@@ -21,10 +21,17 @@ std::shared_ptr<ChassisController> drive =
 		Controller controller;
 		pros::ADIDigitalOut clamp (clampPiston);
 		ControllerButton clampButton (ControllerDigital::R1);
-		ControllerButton goalLiftButton (ControllerDigital::A);
-		ControllerButton up (ControllerDigital::B);
+		ControllerButton liftUpButton (ControllerDigital::L1);
+		ControllerButton liftDownButton (ControllerDigital::L2);
+		ControllerButton goalLiftUpButton (ControllerDigital::A); //change?
+		ControllerButton goalLiftDownButton (ControllerDigital::X);//change?
+		ControllerButton ringIntakeButton (ControllerDigital::Y);
+		ControllerButton ringNonIntakeButton (ControllerDigital::B);
 		bool isClampClosed = false;
+		bool isRingOn = false;
 		MotorGroup goalLift {-8,18};
+		Motor ringMotor {14}; //change?
+		MotorGroup lift {5,15};
 		std::shared_ptr<AsyncPositionController<double, double>> goalLiftControl =
 	AsyncPosControllerBuilder()
 		.withMotor(goalLift)
@@ -115,7 +122,40 @@ void opcontrol() {
 		}
 		}
 
-		if (goalLiftButton.isPressed())
+		if (liftUpButton.changedToPressed())
+		{
+			lift.moveVelocity(-100);
+			if (liftUpButton.isPressed()&&liftDownButton.isPressed())
+			{
+				lift.moveVoltage(-500);
+			}
+		}
+		else if(liftUpButton.changedToReleased())
+		{
+			lift.moveVoltage(0);
+			if (liftUpButton.isPressed()&&liftDownButton.isPressed())
+			{
+				lift.moveVoltage(-500);
+			}
+		}
+		else if(liftDownButton.changedToPressed())
+		{
+			lift.moveVelocity(900);
+			if (liftUpButton.isPressed()&&liftDownButton.isPressed())
+			{
+				lift.moveVoltage(-500);
+			}
+		}
+		else if (liftDownButton.changedToReleased())
+		{
+			lift.moveVoltage(0);
+			if (liftUpButton.isPressed()&&liftDownButton.isPressed())
+			{
+				lift.moveVoltage(-500);
+			}
+		}
+
+		if (goalLiftUpButton.isPressed())
 		{
 			//goalLift.getPosition()==0
 			//goalLift.getTargetVelocity()==100
@@ -132,9 +172,36 @@ void opcontrol() {
 			//pros::delay(20);
 		//}
 	}
-	if (up.isPressed()){
+	if (goalLiftDownButton.isPressed()){
 		goalLift.moveAbsolute(550, 200);
 		pros::delay(20);
 	}
+
+	if (ringIntakeButton.isPressed())
+{
+	if (isRingOn == false) {
+		ringMotor.moveVelocity(300);
+		isRingOn = true;
+	} else {
+		ringMotor.moveVelocity(0);
+		isRingOn = false;
+	}
+	pros::delay(200);
+}
+
+if (ringNonIntakeButton.isPressed())
+{
+	if (isRingOn == false) {
+		ringMotor.moveVelocity(-300);
+		isRingOn = true;
+	} else {
+		ringMotor.moveVelocity(0);
+		isRingOn = false;
+	}
+	pros::delay(200);
+}
+
 }
 }
+//TO do
+//possibly change buttons and names for goal lift (search "change")
