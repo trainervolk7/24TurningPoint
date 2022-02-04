@@ -1,5 +1,6 @@
 #include "main.h"
 #define clampPiston 'B'
+#define flipPiston 'E'
 float x=-2.0;
 
 std::shared_ptr<ChassisController> drive =
@@ -20,18 +21,19 @@ std::shared_ptr<ChassisController> drive =
 						.buildMotionProfileController();
 		Controller controller;
 		pros::ADIDigitalOut clamp (clampPiston);
+		pros::ADIDigitalOut flip (flipPiston);
 		ControllerButton clampButton (ControllerDigital::R1);
-		ControllerButton liftUpButton (ControllerDigital::L1);
-		ControllerButton liftDownButton (ControllerDigital::L2);
-		ControllerButton goalLiftUpButton (ControllerDigital::A); //change?
-		ControllerButton goalLiftDownButton (ControllerDigital::X);//change?
-		ControllerButton ringIntakeButton (ControllerDigital::Y);
-		ControllerButton ringNonIntakeButton (ControllerDigital::B);
+		ControllerButton liftUpButton (ControllerDigital::L2);
+		ControllerButton liftDownButton (ControllerDigital::L1);
+		ControllerButton goalLiftDownButton (ControllerDigital::A); //change?
+		ControllerButton goalLiftUpButton (ControllerDigital::X);//change?
+		ControllerButton ringIntakeButton (ControllerDigital::up);
+		ControllerButton ringNonIntakeButton (ControllerDigital::down);
 		bool isClampClosed = false;
 		bool isRingOn = false;
 		MotorGroup goalLift {-8,18};
-		Motor ringMotor {14}; //change?
-		MotorGroup lift {5,15};
+		Motor ringMotor {-6}; //change?
+		MotorGroup lift {5,-15};
 		std::shared_ptr<AsyncPositionController<double, double>> goalLiftControl =
 	AsyncPosControllerBuilder()
 		.withMotor(goalLift)
@@ -54,6 +56,7 @@ void on_center_button() {
  */
 void initialize() {
 	clamp.set_value(true);
+	flip.set_value(true);
 	goalLift.setBrakeMode(AbstractMotor::brakeMode(2));
 	goalLift.setGearing(AbstractMotor::gearset::red);
 	goalLift.setEncoderUnits(AbstractMotor::encoderUnits::degrees);
@@ -91,7 +94,7 @@ void competition_initialize() {}
  * from where it left off.
  */
 void autonomous() {}
-
+flip.set_value(true);
 /**
  * Runs the operator control code. This function will be started in its own task
  * with the default priority and stack size whenever the robot is enabled via
@@ -127,7 +130,7 @@ void opcontrol() {
 			lift.moveVelocity(-100);
 			if (liftUpButton.isPressed()&&liftDownButton.isPressed())
 			{
-				lift.moveVoltage(-500);
+				lift.moveVoltage(-700);
 			}
 		}
 		else if(liftUpButton.changedToReleased())
@@ -135,7 +138,7 @@ void opcontrol() {
 			lift.moveVoltage(0);
 			if (liftUpButton.isPressed()&&liftDownButton.isPressed())
 			{
-				lift.moveVoltage(-500);
+				lift.moveVoltage(-700);
 			}
 		}
 		else if(liftDownButton.changedToPressed())
@@ -143,7 +146,7 @@ void opcontrol() {
 			lift.moveVelocity(900);
 			if (liftUpButton.isPressed()&&liftDownButton.isPressed())
 			{
-				lift.moveVoltage(-500);
+				lift.moveVoltage(900);
 			}
 		}
 		else if (liftDownButton.changedToReleased())
@@ -151,18 +154,21 @@ void opcontrol() {
 			lift.moveVoltage(0);
 			if (liftUpButton.isPressed()&&liftDownButton.isPressed())
 			{
-				lift.moveVoltage(-500);
+				lift.moveVoltage(900);
 			}
 		}
 
-		if (goalLiftUpButton.isPressed())
+		if (goalLiftUpButton.changedToPressed())
 		{
+			goalLift.moveVelocity(-100);
+			//pros::delay(20);
+
 			//goalLift.getPosition()==0
 			//goalLift.getTargetVelocity()==100
 			//if(goalLift.getPosition()!=x){
 			//goalLiftControl->setTarget(400);
-			goalLift.moveAbsolute(-550, 200);
-			pros::delay(20);
+			//goalLift.moveAbsolute(-300, 400);
+			//pros::delay(20);
 			//x=goalLift.getPosition();
 			//pros::delay(20);
 		//}else if(goalLift.getPosition()==x){
@@ -172,9 +178,18 @@ void opcontrol() {
 			//pros::delay(20);
 		//}
 	}
-	if (goalLiftDownButton.isPressed()){
-		goalLift.moveAbsolute(550, 200);
-		pros::delay(20);
+	else if (goalLiftUpButton.changedToReleased()){
+		goalLift.moveVelocity(0);
+		//pros::delay(20);
+	}
+
+	if (goalLiftDownButton.changedToPressed()){
+		goalLift.moveVelocity(100);
+		//pros::delay(20);
+	}
+	else if (goalLiftDownButton.changedToReleased()){
+		goalLift.moveVelocity(0);
+		//pros::delay(20);
 	}
 
 	if (ringIntakeButton.isPressed())
