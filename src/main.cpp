@@ -14,7 +14,7 @@ std::shared_ptr<ChassisController> drive =
 				  AsyncMotionProfileControllerBuilder()
 				    .withLimits({
 				      1.0, // Maximum linear velocity of the Chassis in m/s
-				      2.0, // Maximum linear acceleration of the Chassis in m/s/s
+				      1.0, // Maximum linear acceleration of the Chassis in m/s/s
 				      10.0 // Maximum linear jerk of the Chassis in m/s/s/s
 				    })
 				    .withOutput(drive)
@@ -31,7 +31,7 @@ std::shared_ptr<ChassisController> drive =
 		ControllerButton ringNonIntakeButton (ControllerDigital::down);
 		bool isClampClosed = false;
 		bool isRingOn = false;
-		MotorGroup goalLift {-8,18};
+		MotorGroup goalLift {8,-18};
 		Motor ringMotor {-6}; //change?
 		MotorGroup lift {5,-15};
 		std::shared_ptr<AsyncPositionController<double, double>> goalLiftControl =
@@ -56,11 +56,12 @@ void on_center_button() {
  */
 void initialize() {
 	clamp.set_value(true);
-	flip.set_value(true);
+	flip.set_value(false);
 	goalLift.setBrakeMode(AbstractMotor::brakeMode(2));
 	goalLift.setGearing(AbstractMotor::gearset::red);
 	goalLift.setEncoderUnits(AbstractMotor::encoderUnits::degrees);
 	goalLift.tarePosition();
+	flip.set_value(true);
 
 }
 
@@ -93,8 +94,25 @@ void competition_initialize() {}
  * will be stopped. Re-enabling the robot will restart the task, not re-start it
  * from where it left off.
  */
-void autonomous() {}
-flip.set_value(true);
+void autonomous() {
+	flip.set_value(false);
+	pros::delay(1000);
+	flip.set_value(true);
+	profileController->generatePath(
+	{{0_in, 0_in, 0_deg}, {16_in, 0_in, 0_deg}}, "A");
+	goalLiftControl->setTarget(400);
+	profileController->setTarget("A");
+	profileController->waitUntilSettled();
+	goalLiftControl->setTarget(0);
+	pros::delay(2500);
+	ringMotor.moveVelocity(200);
+	pros::delay(2500);
+	ringMotor.moveVelocity(0);
+	profileController->setTarget("A",true);
+	profileController->waitUntilSettled();
+
+}
+//flip.set_value(true);
 /**
  * Runs the operator control code. This function will be started in its own task
  * with the default priority and stack size whenever the robot is enabled via
@@ -160,7 +178,7 @@ void opcontrol() {
 
 		if (goalLiftUpButton.changedToPressed())
 		{
-			goalLift.moveVelocity(-100);
+			goalLift.moveVelocity(100);
 			//pros::delay(20);
 
 			//goalLift.getPosition()==0
@@ -184,7 +202,7 @@ void opcontrol() {
 	}
 
 	if (goalLiftDownButton.changedToPressed()){
-		goalLift.moveVelocity(100);
+		goalLift.moveVelocity(-100);
 		//pros::delay(20);
 	}
 	else if (goalLiftDownButton.changedToReleased()){
@@ -195,7 +213,7 @@ void opcontrol() {
 	if (ringIntakeButton.isPressed())
 {
 	if (isRingOn == false) {
-		ringMotor.moveVelocity(300);
+		ringMotor.moveVelocity(200);
 		isRingOn = true;
 	} else {
 		ringMotor.moveVelocity(0);
@@ -207,7 +225,7 @@ void opcontrol() {
 if (ringNonIntakeButton.isPressed())
 {
 	if (isRingOn == false) {
-		ringMotor.moveVelocity(-300);
+		ringMotor.moveVelocity(-200);
 		isRingOn = true;
 	} else {
 		ringMotor.moveVelocity(0);
