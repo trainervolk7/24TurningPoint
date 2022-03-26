@@ -1,11 +1,12 @@
 #include "main.h"
+#include <bits/specfun.h>
 #define clampPiston 'B'
 #define flipPiston 'E'
 float x=-2.0;
 
 std::shared_ptr<ChassisController> drive =
 	ChassisControllerBuilder()
-		.withMotors( {-1,2,-3},{11,-12,13})
+		.withMotors( {-11,12,-13},{1,-2,3})
 		// Green gearset, 4 in wheel diam, 11.5 im wheel track
 		// 36 to 60 gear ratio
 		.withDimensions({AbstractMotor::gearset::blue, (60.0/36.0)},{{4.125_in, 15_in}, imev5GreenTPR})
@@ -44,6 +45,29 @@ std::shared_ptr<ChassisController> drive =
  * When this callback is fired, it will toggle line 2 of the LCD text between
  * "I was pressed!" and nothing.
  */
+
+//LVGL Code
+lv_obj_t * createBtn(lv_obj_t * parent, lv_coord_t x, lv_coord_t y, lv_coord_t width, lv_coord_t height,
+    int id, const char * title)
+{
+    lv_obj_t * btn = lv_btn_create(parent, NULL);
+    lv_obj_set_pos(btn, x, y);
+    lv_obj_set_size(btn, width, height);
+    lv_obj_set_free_num(btn, id);
+
+    lv_obj_t * label = lv_label_create(btn, NULL);
+    lv_label_set_text(label, title);
+    lv_obj_align(label, NULL, LV_ALIGN_IN_TOP_MID, 0, 5);
+
+    return btn;
+}
+
+
+
+
+
+
+
 void on_center_button() {
 
 }
@@ -62,6 +86,34 @@ void initialize() {
 	goalLift.setEncoderUnits(AbstractMotor::encoderUnits::degrees);
 	goalLift.tarePosition();
 	flip.set_value(true);
+
+
+//LVGL Code
+//Width: 480 , height: 230 plus some
+
+//createBtn(lv_obj_t * parent, lv_coord_t x, lv_coord_t y, lv_coord_t width, lv_coord_t height, int id, const char * title)
+
+/*lv_style_copy(&style_btn, &lv_style_plain);
+    style_btn.body.main_color = LV_COLOR_MAKE(255, 0, 0);
+    style_btn.body.grad_color = LV_COLOR_MAKE(0, 0, 255);
+    style_btn.body.radius = 0;
+    style_btn.text.color = LV_COLOR_MAKE(255, 255, 255);
+
+		lv_style_copy(&style_btnREL, &lv_style_plain);
+
+
+		    style_btnREL.body.main_color = LV_COLOR_MAKE(150, 0, 0);
+		    style_btnREL.body.grad_color = LV_COLOR_MAKE(0, 0, 150);
+		    style_btnREL.body.radius = 0;
+		    style_btnREL.text.color = LV_COLOR_MAKE(255, 255, 255);
+		lv_obj_t * button = createBtn(lv_scr_act(),50 ,50,100,50 ,33 , "test");
+		lv_btn_set_style(button, LV_BTN_STYLE_REL, &style_btnREL); //set the relesed style
+		    lv_btn_set_style(button, LV_BTN_STYLE_PR, &style_btn); //set the pressed style
+*/
+	lv_obj_t * button = createBtn(lv_scr_act(),50 ,50,100,50 ,33 , "test");
+
+
+
 
 }
 
@@ -110,6 +162,20 @@ void autonomous() {
 	ringMotor.moveVelocity(0);
 	profileController->setTarget("A",true);
 	profileController->waitUntilSettled();
+
+
+/*
+new autonomous
+24 bot starting on right
+	-goes for the middle yellow goal first (since less people go for it)
+	-comes back put middle goal on platform
+	-remove mobile goal from line and place rings
+
+
+
+*/
+
+
 
 }
 //flip.set_value(true);
@@ -236,5 +302,10 @@ if (ringNonIntakeButton.isPressed())
 
 }
 }
-//TO do
-//possibly change buttons and names for goal lift (search "change")
+
+
+//programming skills
+/*
+24 starts on left side
+-grabs mobile goal on seesaw with
+*/
